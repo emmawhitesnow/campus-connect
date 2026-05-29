@@ -2,12 +2,13 @@ import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import { Home, Users, Compass, User, Plus, X, Calendar, UserPlus, Sparkles } from "lucide-react";
 import { useState } from "react";
 
-const TABS = [
+type Tab = { to: string; label: string; icon: typeof Home; exact?: boolean };
+const TABS: Tab[] = [
   { to: "/", label: "Home", icon: Home, exact: true },
   { to: "/network", label: "Network", icon: Users },
   { to: "/discover", label: "Discover", icon: Compass },
   { to: "/profile", label: "Profile", icon: User },
-] as const;
+];
 
 export function BottomTabBar() {
   const loc = useLocation();
