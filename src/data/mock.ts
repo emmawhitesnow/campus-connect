@@ -67,9 +67,29 @@ export const activities: Activity[] = [
 ];
 
 export const recommendations = [
-  { id: "r1", title: "3 friends are free at 1pm", subtitle: "Schedule lunch at Collis?", action: "Plan it" as const },
-  { id: "r2", title: "Indie Film Night fits your taste", subtitle: "2 friends already going | Fri 7pm", action: "View" as const },
+  {
+    id: "r1",
+    title: "3 friends are free at 1pm",
+    subtitle: "Schedule lunch at Collis?",
+    action: "Plan it" as const,
+    prefill: {
+      title: "Lunch at Collis",
+      location: "Collis Café",
+      start: "13:00",
+      end: "14:00",
+      color: "gold" as const,
+      type: "Hangout" as const,
+    },
+  },
+  {
+    id: "r2",
+    title: "Indie Film Night fits your taste",
+    subtitle: "2 friends already going | Fri 7pm",
+    action: "View" as const,
+    eventId: "ev1",
+  },
 ];
+
 
 const NAMES = [
   "Emile","Stuart","Tate","Maya","Julia","Noelle","Manya","Amy","Thomas","Jordan",
