@@ -55,8 +55,7 @@ function DiscoverPage() {
       {tab === "advice" && (
         <button
           onClick={() => setAskOpen(true)}
-          className="fixed md:absolute bottom-24 right-6 z-30 rounded-full bg-accent text-accent-foreground px-4 py-3 text-sm font-bold shadow-lg inline-flex items-center gap-2"
-          style={{ right: "max(1.5rem, calc(50vw - 215px + 1.5rem))" }}
+          className="absolute bottom-24 right-6 z-30 rounded-full bg-accent text-accent-foreground px-4 py-3 text-sm font-bold shadow-lg inline-flex items-center gap-2"
         >
           <Plus size={16} /> Ask
         </button>
