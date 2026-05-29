@@ -1,7 +1,8 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { Bell, Menu, Search, MessageSquare, Phone, CalendarPlus } from "lucide-react";
-import { useState } from "react";
+import { Bell, Search, MessageSquare, Phone, CalendarPlus } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Avatar } from "@/components/Avatar";
+import { OrbitLogo } from "@/components/OrbitLogo";
 import { activities, recommendations, me } from "@/data/mock";
 import { useApp } from "@/store/app";
 import { useInteractions } from "@/components/InteractionContext";
@@ -23,7 +24,7 @@ export const Route = createFileRoute("/")({
 
 const HOUR_START = 6;
 const HOUR_END = 23;
-const HOUR_PX = 56; // pixels per hour
+const HOUR_PX = 56;
 const INITIAL_SCROLL_HOUR = 10;
 
 function HomePage() {
@@ -32,6 +33,15 @@ function HomePage() {
   const events = useApp((s) => s.events);
   const unread = useApp((s) => s.notifications.filter((n) => !n.read).length);
   const todays = events.filter((e) => e.date === new Date().toISOString().slice(0, 10));
+
+  // First-visit onboarding gate
+  useEffect(() => {
+    try {
+      if (typeof window !== "undefined" && !localStorage.getItem("orbit:onboarded")) {
+        navigate({ to: "/welcome" });
+      }
+    } catch {}
+  }, [navigate]);
 
   return (
     <div>
@@ -45,19 +55,31 @@ function HomePage() {
               <p className="text-sm font-bold text-primary leading-tight">{me.firstName}</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 text-muted-foreground">
+          <div className="flex items-center gap-1 text-muted-foreground">
             <Link to="/notifications" className="relative p-2" aria-label="Notifications">
               <Bell size={22} />
               {unread > 0 && <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-accent" />}
             </Link>
             <DropdownMenu>
-              <DropdownMenuTrigger className="p-2" aria-label="Menu"><Menu size={22} /></DropdownMenuTrigger>
+              <DropdownMenuTrigger
+                className="p-1.5 rounded-full text-primary hover:bg-primary/5 transition-colors"
+                aria-label="Orbit menu"
+              >
+                <OrbitLogo size={30} />
+              </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onSelect={() => navigate({ to: "/profile" })}>Home preferences</DropdownMenuItem>
                 <DropdownMenuItem>Theme</DropdownMenuItem>
                 <DropdownMenuItem>Help</DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>Sign out</DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => {
+                    try { localStorage.removeItem("orbit:onboarded"); } catch {}
+                    navigate({ to: "/welcome" });
+                  }}
+                >
+                  Sign out
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
@@ -130,11 +152,15 @@ function HomePage() {
                 <p className="text-sm font-bold">{r.title}</p>
                 <p className="text-xs opacity-80 mt-1">{r.subtitle}</p>
                 <button
-                  onClick={() =>
-                    r.action === "Plan it"
-                      ? navigate({ to: "/event/new" })
-                      : navigate({ to: "/discover" })
-                  }
+                  onClick={() => {
+                    if (r.action === "Plan it" && "prefill" in r && r.prefill) {
+                      navigate({ to: "/event/new", search: r.prefill as any });
+                    } else if (r.action === "View" && "eventId" in r && r.eventId) {
+                      navigate({ to: "/event/$eventId", params: { eventId: r.eventId } });
+                    } else {
+                      navigate({ to: "/discover" });
+                    }
+                  }}
                   className="mt-3 rounded-full bg-accent text-accent-foreground text-xs font-semibold px-3 py-1.5"
                 >
                   {r.action}
@@ -146,7 +172,10 @@ function HomePage() {
 
         <section className="mt-7 mb-6">
           <h3 className="text-primary font-semibold">Today's Event Lineup</h3>
-          <DayTimeline events={todays} />
+          <DayTimeline
+            events={todays}
+            onTap={(id) => navigate({ to: "/event/$eventId", params: { eventId: id } })}
+          />
         </section>
       </div>
     </div>
@@ -155,8 +184,10 @@ function HomePage() {
 
 function DayTimeline({
   events,
+  onTap,
 }: {
   events: { id: string; title: string; startHour: number; endHour: number; color: string }[];
+  onTap: (id: string) => void;
 }) {
   const [scrollRef] = useState(() => ({ done: false }));
   const hours = [];
@@ -194,16 +225,16 @@ function DayTimeline({
             green: "bg-[oklch(0.65_0.16_150)] text-white",
             pink: "bg-[oklch(0.7_0.16_350)] text-white",
           };
-          // Stagger overlapping events left/right
           const left = idx % 2 === 0 ? "14%" : "52%";
           return (
-            <div
+            <button
               key={e.id}
-              className={`absolute rounded-xl px-3 py-1.5 text-[11px] font-semibold shadow-sm flex items-center justify-center text-center ${colors[e.color] ?? colors.indigo}`}
+              onClick={() => onTap(e.id)}
+              className={`absolute rounded-xl px-3 py-1.5 text-[11px] font-semibold shadow-sm flex items-center justify-center text-center transition-transform active:scale-95 ${colors[e.color] ?? colors.indigo}`}
               style={{ top, height, left, width: "34%" }}
             >
               <span className="truncate">{e.title}</span>
-            </div>
+            </button>
           );
         })}
       </div>

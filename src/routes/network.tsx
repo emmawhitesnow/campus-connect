@@ -44,7 +44,7 @@ function NetworkPage() {
   }, [q, sort, favorites]);
 
   return (
-    <div className="relative h-[calc(100dvh-7rem)] md:h-[calc(900px-7rem)] -mb-28">
+    <div className="relative h-[calc(100%+7rem)] -mb-28">
       <ScreenHeader title="Your Network" back="/" />
       <div className="absolute inset-0 top-14">
         <ConstellationCanvas />
@@ -73,7 +73,7 @@ function NetworkPage() {
             </div>
           </div>
           <p className="text-[11px] uppercase tracking-wide text-muted-foreground mt-3 mb-1 px-1">
-            {sortLabel(sort)} · {list.length}
+            {sortLabel(sort)}
           </p>
           <div className="divide-y divide-border">
             {list.map((f) => {
