@@ -9,6 +9,8 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WelcomeRouteImport } from './routes/welcome'
+import { Route as SigninRouteImport } from './routes/signin'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as NetworkRouteImport } from './routes/network'
@@ -19,6 +21,16 @@ import { Route as FriendsAddRouteImport } from './routes/friends.add'
 import { Route as EventNewRouteImport } from './routes/event.new'
 import { Route as ClubsClubIdRouteImport } from './routes/clubs.$clubId'
 
+const WelcomeRoute = WelcomeRouteImport.update({
+  id: '/welcome',
+  path: '/welcome',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SigninRoute = SigninRouteImport.update({
+  id: '/signin',
+  path: '/signin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -72,6 +84,8 @@ export interface FileRoutesByFullPath {
   '/network': typeof NetworkRoute
   '/notifications': typeof NotificationsRoute
   '/profile': typeof ProfileRoute
+  '/signin': typeof SigninRoute
+  '/welcome': typeof WelcomeRoute
   '/clubs/$clubId': typeof ClubsClubIdRoute
   '/event/new': typeof EventNewRoute
   '/friends/add': typeof FriendsAddRoute
@@ -83,6 +97,8 @@ export interface FileRoutesByTo {
   '/network': typeof NetworkRoute
   '/notifications': typeof NotificationsRoute
   '/profile': typeof ProfileRoute
+  '/signin': typeof SigninRoute
+  '/welcome': typeof WelcomeRoute
   '/clubs/$clubId': typeof ClubsClubIdRoute
   '/event/new': typeof EventNewRoute
   '/friends/add': typeof FriendsAddRoute
@@ -95,6 +111,8 @@ export interface FileRoutesById {
   '/network': typeof NetworkRoute
   '/notifications': typeof NotificationsRoute
   '/profile': typeof ProfileRoute
+  '/signin': typeof SigninRoute
+  '/welcome': typeof WelcomeRoute
   '/clubs/$clubId': typeof ClubsClubIdRoute
   '/event/new': typeof EventNewRoute
   '/friends/add': typeof FriendsAddRoute
@@ -108,6 +126,8 @@ export interface FileRouteTypes {
     | '/network'
     | '/notifications'
     | '/profile'
+    | '/signin'
+    | '/welcome'
     | '/clubs/$clubId'
     | '/event/new'
     | '/friends/add'
@@ -119,6 +139,8 @@ export interface FileRouteTypes {
     | '/network'
     | '/notifications'
     | '/profile'
+    | '/signin'
+    | '/welcome'
     | '/clubs/$clubId'
     | '/event/new'
     | '/friends/add'
@@ -130,6 +152,8 @@ export interface FileRouteTypes {
     | '/network'
     | '/notifications'
     | '/profile'
+    | '/signin'
+    | '/welcome'
     | '/clubs/$clubId'
     | '/event/new'
     | '/friends/add'
@@ -142,6 +166,8 @@ export interface RootRouteChildren {
   NetworkRoute: typeof NetworkRoute
   NotificationsRoute: typeof NotificationsRoute
   ProfileRoute: typeof ProfileRoute
+  SigninRoute: typeof SigninRoute
+  WelcomeRoute: typeof WelcomeRoute
   ClubsClubIdRoute: typeof ClubsClubIdRoute
   EventNewRoute: typeof EventNewRoute
   FriendsAddRoute: typeof FriendsAddRoute
@@ -149,6 +175,20 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/welcome': {
+      id: '/welcome'
+      path: '/welcome'
+      fullPath: '/welcome'
+      preLoaderRoute: typeof WelcomeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signin': {
+      id: '/signin'
+      path: '/signin'
+      fullPath: '/signin'
+      preLoaderRoute: typeof SigninRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/profile': {
       id: '/profile'
       path: '/profile'
@@ -222,6 +262,8 @@ const rootRouteChildren: RootRouteChildren = {
   NetworkRoute: NetworkRoute,
   NotificationsRoute: NotificationsRoute,
   ProfileRoute: ProfileRoute,
+  SigninRoute: SigninRoute,
+  WelcomeRoute: WelcomeRoute,
   ClubsClubIdRoute: ClubsClubIdRoute,
   EventNewRoute: EventNewRoute,
   FriendsAddRoute: FriendsAddRoute,
@@ -229,3 +271,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
