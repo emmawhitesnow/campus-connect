@@ -178,8 +178,8 @@ function EventsList({ q }: { q: string }) {
     () => discoverEvents.filter((e) => e.title.toLowerCase().includes(q.toLowerCase())),
     [q],
   );
-  // Pinning state respects pending toggle visually
-  const goingNow = (id: string) => (pending === id ? !going[id] : going[id]);
+  // Keep card in original bucket during pending toggle so user sees the move
+  const goingNow = (id: string) => !!going[id];
   const pinned = filtered.filter((e) => goingNow(e.id));
   const others = filtered.filter((e) => !goingNow(e.id));
 
