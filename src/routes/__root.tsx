@@ -10,6 +10,7 @@ import {
 
 import appCss from "../styles.css?url";
 import { BottomTabBar } from "@/components/BottomTabBar";
+import { InteractionProvider } from "@/components/InteractionContext";
 
 function NotFoundComponent() {
   return (
@@ -66,7 +67,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
         rel: "stylesheet",
-        href: "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap",
+        href: "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Caveat:wght@600;700&display=swap",
       },
     ],
   }),
@@ -89,12 +90,14 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
-      <div className="phone-shell flex flex-col">
-        <main className="flex-1 overflow-y-auto pb-28 no-scrollbar">
-          <Outlet />
-        </main>
-        <BottomTabBar />
-      </div>
+      <InteractionProvider>
+        <div className="phone-shell flex flex-col">
+          <main className="flex-1 overflow-y-auto pb-28 no-scrollbar">
+            <Outlet />
+          </main>
+          <BottomTabBar />
+        </div>
+      </InteractionProvider>
     </QueryClientProvider>
   );
 }
