@@ -1,6 +1,6 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Users, Calendar, MessageCircle, Search, Star, Filter, Plus, ArrowUp, Check, Pin, X } from "lucide-react";
+import { Users, Calendar, MessageCircle, Search, Star, Filter, Plus, ArrowUp, Check, X } from "lucide-react";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { Avatar } from "@/components/Avatar";
 import { discoverClubs, discoverEvents, adviceThreads } from "@/data/mock";
@@ -152,17 +152,37 @@ function EventsList({ q }: { q: string }) {
   const [today, setToday] = useState(4);
   const going = useApp((s) => s.goingEvents);
   const toggleGoing = useApp((s) => s.toggleGoing);
+  const [animatingId, setAnimatingId] = useState<string | null>(null);
 
   const filtered = useMemo(
     () => discoverEvents.filter((e) => e.title.toLowerCase().includes(q.toLowerCase())),
     [q],
   );
-  const pinned = filtered.filter((e) => going[e.id]);
-  const others = filtered.filter((e) => !going[e.id]);
+  
+  // Sort: going events at top, no "pinned" label
+  const sortedEvents = useMemo(() => {
+    const goingEvents = filtered.filter((e) => going[e.id]);
+    const notGoingEvents = filtered.filter((e) => !going[e.id]);
+    return [...goingEvents, ...notGoingEvents];
+  }, [filtered, going]);
+
+  function handleToggleGoing(id: string) {
+    // If removing from "going", animate it
+    if (going[id]) {
+      setAnimatingId(id);
+      setTimeout(() => {
+        toggleGoing(id);
+        setAnimatingId(null);
+      }, 300);
+    } else {
+      toggleGoing(id);
+    }
+  }
 
   return (
     <>
-      <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-5 px-5 snap-x snap-mandatory">
+      {/* Show partial edge days - add padding to reveal half of first/last item */}
+      <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-5 px-3 snap-x snap-mandatory">
         {fullDays.map((d, i) => (
           <button
             key={i}
@@ -177,8 +197,15 @@ function EventsList({ q }: { q: string }) {
         ))}
       </div>
       <div className="mt-4 space-y-3">
-        {pinned.map((e) => <EventCard key={e.id} e={e} going onToggle={() => toggleGoing(e.id)} pinned />)}
-        {others.map((e) => <EventCard key={e.id} e={e} going={false} onToggle={() => toggleGoing(e.id)} />)}
+        {sortedEvents.map((e) => (
+          <EventCard 
+            key={e.id} 
+            e={e} 
+            going={!!going[e.id]} 
+            onToggle={() => handleToggleGoing(e.id)} 
+            isAnimating={animatingId === e.id}
+          />
+        ))}
         {filtered.length === 0 && <p className="text-center text-sm text-muted-foreground py-6">No events match.</p>}
       </div>
     </>
@@ -186,28 +213,29 @@ function EventsList({ q }: { q: string }) {
 }
 
 function EventCard({
-  e, going, onToggle, pinned,
+  e, going, onToggle, isAnimating,
 }: {
   e: typeof discoverEvents[number];
   going: boolean;
   onToggle: () => void;
-  pinned?: boolean;
+  isAnimating?: boolean;
 }) {
   return (
-    <div className="rounded-2xl bg-card p-4 relative">
-      {pinned && (
-        <span className="absolute top-3 right-3 text-[10px] text-muted-foreground inline-flex items-center gap-1">
-          <Pin size={10} /> Pinned
-        </span>
-      )}
+    <Link 
+      to="/events/$eventId"
+      params={{ eventId: e.id }}
+      className={`block rounded-2xl bg-card p-4 transition-all duration-300 hover:bg-card/80 ${
+        isAnimating ? "opacity-50 translate-y-2" : ""
+      }`}
+    >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-[11px] font-semibold text-accent">{e.day} | {e.time}</p>
-          <p className="text-sm font-bold text-primary mt-0.5">{e.title}</p>
+          <p className="text-sm font-bold text-primary">{e.title}</p>
+          <p className="text-[11px] font-semibold text-accent mt-0.5">{e.day} | {e.time}</p>
           <p className="text-[11px] text-muted-foreground">{e.location}</p>
         </div>
         <button
-          onClick={onToggle}
+          onClick={(ev) => { ev.preventDefault(); ev.stopPropagation(); onToggle(); }}
           className={`text-xs font-semibold rounded-full px-3 py-1.5 inline-flex items-center gap-1 ${
             going
               ? "bg-[oklch(0.92_0.06_150)] text-[oklch(0.4_0.14_150)]"
@@ -223,7 +251,7 @@ function EventCard({
           {e.friendsFree} friends free
         </span>
       </div>
-    </div>
+    </Link>
   );
 }
 
@@ -262,7 +290,12 @@ function AdviceList({ q }: { q: string }) {
       </div>
       <div className="mt-4 space-y-3">
         {list.map((t) => (
-          <div key={t.id} className="rounded-2xl bg-card p-4">
+          <Link 
+            key={t.id}
+            to="/advice/$threadId"
+            params={{ threadId: t.id }}
+            className="block rounded-2xl bg-card p-4 hover:bg-card/80 transition-colors"
+          >
             <div className="flex items-center gap-2">
               <span className="text-[10px] rounded-full bg-primary/10 text-primary px-2 py-0.5 font-semibold">{t.tag}</span>
               <span className="text-[10px] text-muted-foreground">answered by {t.answeredBy}</span>
@@ -272,12 +305,12 @@ function AdviceList({ q }: { q: string }) {
               <span className="inline-flex items-center gap-1"><ArrowUp size={12} /> {t.upvotes}</span>
               <span>{t.answers} answers</span>
             </div>
-          </div>
+          </Link>
         ))}
       </div>
       <button
         onClick={() => setOpen(true)}
-        className="absolute bottom-28 right-6 z-10 rounded-full bg-accent text-accent-foreground px-4 py-3 text-sm font-bold shadow-lg inline-flex items-center gap-2"
+        className="fixed bottom-24 right-6 z-30 rounded-full bg-accent text-accent-foreground px-4 py-3 text-sm font-bold shadow-lg inline-flex items-center gap-2"
       >
         <Plus size={16} /> Ask
       </button>

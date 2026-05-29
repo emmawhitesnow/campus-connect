@@ -33,6 +33,8 @@ export type AdvicePost = {
 };
 
 type AppState = {
+  isSignedIn: boolean;
+  userName: string;
   events: StoredEvent[];
   notifications: StoredNotification[];
   goingEvents: Record<string, boolean>;
@@ -41,7 +43,10 @@ type AppState = {
   addedFriends: Record<string, boolean>;
   advicePosts: AdvicePost[];
 
+  setSignedIn: (signed: boolean, name?: string) => void;
   addEvent: (e: StoredEvent) => void;
+  updateEvent: (e: StoredEvent) => void;
+  deleteEvent: (id: string) => void;
   toggleGoing: (id: string) => void;
   toggleJoined: (id: string) => void;
   toggleFavorite: (id: string) => void;
@@ -55,6 +60,8 @@ type AppState = {
 const todayISO = () => new Date().toISOString().slice(0, 10);
 
 export const useApp = create<AppState>((set) => ({
+  isSignedIn: false,
+  userName: "",
   events: [
     { id: "e1", title: "Breakfast with Manya", date: todayISO(), startHour: 10, endHour: 11.5, color: "gold", location: "Foco" },
     { id: "e2", title: "Lacrosse Tournament", date: todayISO(), startHour: 10.5, endHour: 12, color: "indigo", location: "Scully-Fahey" },
@@ -74,7 +81,10 @@ export const useApp = create<AppState>((set) => ({
   addedFriends: {},
   advicePosts: [],
 
+  setSignedIn: (signed, name) => set({ isSignedIn: signed, userName: name || "" }),
   addEvent: (e) => set((s) => ({ events: [...s.events, e] })),
+  updateEvent: (e) => set((s) => ({ events: s.events.map((ev) => (ev.id === e.id ? e : ev)) })),
+  deleteEvent: (id) => set((s) => ({ events: s.events.filter((ev) => ev.id !== id) })),
   toggleGoing: (id) => set((s) => ({ goingEvents: { ...s.goingEvents, [id]: !s.goingEvents[id] } })),
   toggleJoined: (id) => set((s) => ({ joinedClubs: { ...s.joinedClubs, [id]: !s.joinedClubs[id] } })),
   toggleFavorite: (id) => set((s) => ({ favorites: { ...s.favorites, [id]: !s.favorites[id] } })),

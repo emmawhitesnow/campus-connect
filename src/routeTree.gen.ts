@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SigninRouteImport } from './routes/signin'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as NetworkRouteImport } from './routes/network'
@@ -16,9 +17,16 @@ import { Route as DiscoverRouteImport } from './routes/discover'
 import { Route as ActivityRouteImport } from './routes/activity'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as FriendsAddRouteImport } from './routes/friends.add'
+import { Route as EventsEventIdRouteImport } from './routes/events.$eventId'
 import { Route as EventNewRouteImport } from './routes/event.new'
 import { Route as ClubsClubIdRouteImport } from './routes/clubs.$clubId'
+import { Route as AdviceThreadIdRouteImport } from './routes/advice.$threadId'
 
+const SigninRoute = SigninRouteImport.update({
+  id: '/signin',
+  path: '/signin',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
@@ -54,6 +62,11 @@ const FriendsAddRoute = FriendsAddRouteImport.update({
   path: '/friends/add',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EventsEventIdRoute = EventsEventIdRouteImport.update({
+  id: '/events/$eventId',
+  path: '/events/$eventId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const EventNewRoute = EventNewRouteImport.update({
   id: '/event/new',
   path: '/event/new',
@@ -64,6 +77,11 @@ const ClubsClubIdRoute = ClubsClubIdRouteImport.update({
   path: '/clubs/$clubId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdviceThreadIdRoute = AdviceThreadIdRouteImport.update({
+  id: '/advice/$threadId',
+  path: '/advice/$threadId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -72,8 +90,11 @@ export interface FileRoutesByFullPath {
   '/network': typeof NetworkRoute
   '/notifications': typeof NotificationsRoute
   '/profile': typeof ProfileRoute
+  '/signin': typeof SigninRoute
+  '/advice/$threadId': typeof AdviceThreadIdRoute
   '/clubs/$clubId': typeof ClubsClubIdRoute
   '/event/new': typeof EventNewRoute
+  '/events/$eventId': typeof EventsEventIdRoute
   '/friends/add': typeof FriendsAddRoute
 }
 export interface FileRoutesByTo {
@@ -83,8 +104,11 @@ export interface FileRoutesByTo {
   '/network': typeof NetworkRoute
   '/notifications': typeof NotificationsRoute
   '/profile': typeof ProfileRoute
+  '/signin': typeof SigninRoute
+  '/advice/$threadId': typeof AdviceThreadIdRoute
   '/clubs/$clubId': typeof ClubsClubIdRoute
   '/event/new': typeof EventNewRoute
+  '/events/$eventId': typeof EventsEventIdRoute
   '/friends/add': typeof FriendsAddRoute
 }
 export interface FileRoutesById {
@@ -95,8 +119,11 @@ export interface FileRoutesById {
   '/network': typeof NetworkRoute
   '/notifications': typeof NotificationsRoute
   '/profile': typeof ProfileRoute
+  '/signin': typeof SigninRoute
+  '/advice/$threadId': typeof AdviceThreadIdRoute
   '/clubs/$clubId': typeof ClubsClubIdRoute
   '/event/new': typeof EventNewRoute
+  '/events/$eventId': typeof EventsEventIdRoute
   '/friends/add': typeof FriendsAddRoute
 }
 export interface FileRouteTypes {
@@ -108,8 +135,11 @@ export interface FileRouteTypes {
     | '/network'
     | '/notifications'
     | '/profile'
+    | '/signin'
+    | '/advice/$threadId'
     | '/clubs/$clubId'
     | '/event/new'
+    | '/events/$eventId'
     | '/friends/add'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -119,8 +149,11 @@ export interface FileRouteTypes {
     | '/network'
     | '/notifications'
     | '/profile'
+    | '/signin'
+    | '/advice/$threadId'
     | '/clubs/$clubId'
     | '/event/new'
+    | '/events/$eventId'
     | '/friends/add'
   id:
     | '__root__'
@@ -130,8 +163,11 @@ export interface FileRouteTypes {
     | '/network'
     | '/notifications'
     | '/profile'
+    | '/signin'
+    | '/advice/$threadId'
     | '/clubs/$clubId'
     | '/event/new'
+    | '/events/$eventId'
     | '/friends/add'
   fileRoutesById: FileRoutesById
 }
@@ -142,13 +178,23 @@ export interface RootRouteChildren {
   NetworkRoute: typeof NetworkRoute
   NotificationsRoute: typeof NotificationsRoute
   ProfileRoute: typeof ProfileRoute
+  SigninRoute: typeof SigninRoute
+  AdviceThreadIdRoute: typeof AdviceThreadIdRoute
   ClubsClubIdRoute: typeof ClubsClubIdRoute
   EventNewRoute: typeof EventNewRoute
+  EventsEventIdRoute: typeof EventsEventIdRoute
   FriendsAddRoute: typeof FriendsAddRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/signin': {
+      id: '/signin'
+      path: '/signin'
+      fullPath: '/signin'
+      preLoaderRoute: typeof SigninRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/profile': {
       id: '/profile'
       path: '/profile'
@@ -198,6 +244,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FriendsAddRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/events/$eventId': {
+      id: '/events/$eventId'
+      path: '/events/$eventId'
+      fullPath: '/events/$eventId'
+      preLoaderRoute: typeof EventsEventIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/event/new': {
       id: '/event/new'
       path: '/event/new'
@@ -212,6 +265,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ClubsClubIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/advice/$threadId': {
+      id: '/advice/$threadId'
+      path: '/advice/$threadId'
+      fullPath: '/advice/$threadId'
+      preLoaderRoute: typeof AdviceThreadIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -222,10 +282,23 @@ const rootRouteChildren: RootRouteChildren = {
   NetworkRoute: NetworkRoute,
   NotificationsRoute: NotificationsRoute,
   ProfileRoute: ProfileRoute,
+  SigninRoute: SigninRoute,
+  AdviceThreadIdRoute: AdviceThreadIdRoute,
   ClubsClubIdRoute: ClubsClubIdRoute,
   EventNewRoute: EventNewRoute,
+  EventsEventIdRoute: EventsEventIdRoute,
   FriendsAddRoute: FriendsAddRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}

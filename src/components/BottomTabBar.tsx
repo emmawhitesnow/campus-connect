@@ -42,7 +42,7 @@ export function BottomTabBar() {
         </div>
       )}
 
-      <nav className="absolute bottom-0 left-0 right-0 z-20 bg-background border-t border-border pb-[env(safe-area-inset-bottom)]">
+      <nav className="fixed bottom-0 left-0 right-0 z-20 bg-background border-t border-border pb-[env(safe-area-inset-bottom)] max-w-md mx-auto md:relative md:max-w-none">
         <div className="relative flex items-stretch justify-around px-4 pt-2 pb-3">
           {TABS.slice(0, 2).map((t) => (
             <TabLink key={t.to} {...t} active={isActive(loc.pathname, t.to, t.exact)} />

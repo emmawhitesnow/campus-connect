@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import {
   Settings, Pencil, MessageSquare, Phone, Heart, Calendar, LogOut, Lock,
-  Sparkles, Sunrise, Compass, BookOpen, Star, ChevronRight,
+  Sunrise, Compass, BookOpen, Star, ChevronRight,
 } from "lucide-react";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { Avatar } from "@/components/Avatar";
@@ -21,8 +21,32 @@ export const Route = createFileRoute("/profile")({
   component: ProfilePage,
 });
 
-const BADGE_ICON: Record<string, typeof Star> = {
-  butterfly: Sparkles,
+// Custom Butterfly Icon
+function ButterflyIcon({ size = 20, className = "" }: { size?: number; className?: string }) {
+  return (
+    <svg 
+      width={size} 
+      height={size} 
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="2" 
+      strokeLinecap="round" 
+      strokeLinejoin="round"
+      className={className}
+    >
+      {/* Left wing */}
+      <path d="M4 8c0-3 2-6 5-6 2 0 3 2 3 4 0-2 1-4 3-4 3 0 5 3 5 6s-2 6-5 6c-2 0-3-2-3-4 0 2-1 4-3 4-3 0-5-3-5-6z" />
+      {/* Body */}
+      <path d="M12 2v20" />
+      {/* Lower wings */}
+      <path d="M4 16c0 2 2 4 4 4 1.5 0 2.5-1 4-3 1.5 2 2.5 3 4 3 2 0 4-2 4-4s-2-4-4-4c-1.5 0-2.5 1-4 3-1.5-2-2.5-3-4-3-2 0-4 2-4 4z" />
+    </svg>
+  );
+}
+
+const BADGE_ICON: Record<string, typeof Star | typeof ButterflyIcon> = {
+  butterfly: ButterflyIcon,
   sunrise: Sunrise,
   compass: Compass,
   heart: Heart,

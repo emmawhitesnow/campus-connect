@@ -6,11 +6,15 @@ import {
   useRouter,
   HeadContent,
   Scripts,
+  useLocation,
+  useNavigate,
 } from "@tanstack/react-router";
+import { useEffect } from "react";
 
 import appCss from "../styles.css?url";
 import { BottomTabBar } from "@/components/BottomTabBar";
 import { InteractionProvider } from "@/components/InteractionContext";
+import { useApp } from "@/store/app";
 
 function NotFoundComponent() {
   return (
@@ -88,6 +92,32 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isSignedIn = useApp((s) => s.isSignedIn);
+  const isSignInPage = location.pathname === "/signin";
+
+  // Redirect to sign-in if not authenticated (except on signin page)
+  useEffect(() => {
+    if (!isSignedIn && !isSignInPage) {
+      navigate({ to: "/signin" });
+    }
+  }, [isSignedIn, isSignInPage, navigate]);
+
+  // Show sign-in page without shell
+  if (isSignInPage) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <Outlet />
+      </QueryClientProvider>
+    );
+  }
+
+  // Show loading state while redirecting
+  if (!isSignedIn) {
+    return null;
+  }
+
   return (
     <QueryClientProvider client={queryClient}>
       <InteractionProvider>
