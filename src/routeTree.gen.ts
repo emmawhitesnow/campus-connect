@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as NetworkRouteImport } from './routes/network'
-import { Route as FindFriendRouteImport } from './routes/find-friend'
 import { Route as DiscoverRouteImport } from './routes/discover'
 import { Route as ActivityRouteImport } from './routes/activity'
 import { Route as IndexRouteImport } from './routes/index'
@@ -33,11 +32,6 @@ const NotificationsRoute = NotificationsRouteImport.update({
 const NetworkRoute = NetworkRouteImport.update({
   id: '/network',
   path: '/network',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const FindFriendRoute = FindFriendRouteImport.update({
-  id: '/find-friend',
-  path: '/find-friend',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DiscoverRoute = DiscoverRouteImport.update({
@@ -75,7 +69,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/activity': typeof ActivityRoute
   '/discover': typeof DiscoverRoute
-  '/find-friend': typeof FindFriendRoute
   '/network': typeof NetworkRoute
   '/notifications': typeof NotificationsRoute
   '/profile': typeof ProfileRoute
@@ -87,7 +80,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/activity': typeof ActivityRoute
   '/discover': typeof DiscoverRoute
-  '/find-friend': typeof FindFriendRoute
   '/network': typeof NetworkRoute
   '/notifications': typeof NotificationsRoute
   '/profile': typeof ProfileRoute
@@ -100,7 +92,6 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/activity': typeof ActivityRoute
   '/discover': typeof DiscoverRoute
-  '/find-friend': typeof FindFriendRoute
   '/network': typeof NetworkRoute
   '/notifications': typeof NotificationsRoute
   '/profile': typeof ProfileRoute
@@ -114,7 +105,6 @@ export interface FileRouteTypes {
     | '/'
     | '/activity'
     | '/discover'
-    | '/find-friend'
     | '/network'
     | '/notifications'
     | '/profile'
@@ -126,7 +116,6 @@ export interface FileRouteTypes {
     | '/'
     | '/activity'
     | '/discover'
-    | '/find-friend'
     | '/network'
     | '/notifications'
     | '/profile'
@@ -138,7 +127,6 @@ export interface FileRouteTypes {
     | '/'
     | '/activity'
     | '/discover'
-    | '/find-friend'
     | '/network'
     | '/notifications'
     | '/profile'
@@ -151,7 +139,6 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ActivityRoute: typeof ActivityRoute
   DiscoverRoute: typeof DiscoverRoute
-  FindFriendRoute: typeof FindFriendRoute
   NetworkRoute: typeof NetworkRoute
   NotificationsRoute: typeof NotificationsRoute
   ProfileRoute: typeof ProfileRoute
@@ -181,13 +168,6 @@ declare module '@tanstack/react-router' {
       path: '/network'
       fullPath: '/network'
       preLoaderRoute: typeof NetworkRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/find-friend': {
-      id: '/find-friend'
-      path: '/find-friend'
-      fullPath: '/find-friend'
-      preLoaderRoute: typeof FindFriendRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/discover': {
@@ -239,7 +219,6 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ActivityRoute: ActivityRoute,
   DiscoverRoute: DiscoverRoute,
-  FindFriendRoute: FindFriendRoute,
   NetworkRoute: NetworkRoute,
   NotificationsRoute: NotificationsRoute,
   ProfileRoute: ProfileRoute,
@@ -250,3 +229,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
