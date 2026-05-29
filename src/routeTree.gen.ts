@@ -19,7 +19,9 @@ import { Route as ActivityRouteImport } from './routes/activity'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as FriendsAddRouteImport } from './routes/friends.add'
 import { Route as EventNewRouteImport } from './routes/event.new'
+import { Route as EventEventIdRouteImport } from './routes/event.$eventId'
 import { Route as ClubsClubIdRouteImport } from './routes/clubs.$clubId'
+import { Route as AdviceAdviceIdRouteImport } from './routes/advice.$adviceId'
 
 const WelcomeRoute = WelcomeRouteImport.update({
   id: '/welcome',
@@ -71,9 +73,19 @@ const EventNewRoute = EventNewRouteImport.update({
   path: '/event/new',
   getParentRoute: () => rootRouteImport,
 } as any)
+const EventEventIdRoute = EventEventIdRouteImport.update({
+  id: '/event/$eventId',
+  path: '/event/$eventId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ClubsClubIdRoute = ClubsClubIdRouteImport.update({
   id: '/clubs/$clubId',
   path: '/clubs/$clubId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdviceAdviceIdRoute = AdviceAdviceIdRouteImport.update({
+  id: '/advice/$adviceId',
+  path: '/advice/$adviceId',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -86,7 +98,9 @@ export interface FileRoutesByFullPath {
   '/profile': typeof ProfileRoute
   '/signin': typeof SigninRoute
   '/welcome': typeof WelcomeRoute
+  '/advice/$adviceId': typeof AdviceAdviceIdRoute
   '/clubs/$clubId': typeof ClubsClubIdRoute
+  '/event/$eventId': typeof EventEventIdRoute
   '/event/new': typeof EventNewRoute
   '/friends/add': typeof FriendsAddRoute
 }
@@ -99,7 +113,9 @@ export interface FileRoutesByTo {
   '/profile': typeof ProfileRoute
   '/signin': typeof SigninRoute
   '/welcome': typeof WelcomeRoute
+  '/advice/$adviceId': typeof AdviceAdviceIdRoute
   '/clubs/$clubId': typeof ClubsClubIdRoute
+  '/event/$eventId': typeof EventEventIdRoute
   '/event/new': typeof EventNewRoute
   '/friends/add': typeof FriendsAddRoute
 }
@@ -113,7 +129,9 @@ export interface FileRoutesById {
   '/profile': typeof ProfileRoute
   '/signin': typeof SigninRoute
   '/welcome': typeof WelcomeRoute
+  '/advice/$adviceId': typeof AdviceAdviceIdRoute
   '/clubs/$clubId': typeof ClubsClubIdRoute
+  '/event/$eventId': typeof EventEventIdRoute
   '/event/new': typeof EventNewRoute
   '/friends/add': typeof FriendsAddRoute
 }
@@ -128,7 +146,9 @@ export interface FileRouteTypes {
     | '/profile'
     | '/signin'
     | '/welcome'
+    | '/advice/$adviceId'
     | '/clubs/$clubId'
+    | '/event/$eventId'
     | '/event/new'
     | '/friends/add'
   fileRoutesByTo: FileRoutesByTo
@@ -141,7 +161,9 @@ export interface FileRouteTypes {
     | '/profile'
     | '/signin'
     | '/welcome'
+    | '/advice/$adviceId'
     | '/clubs/$clubId'
+    | '/event/$eventId'
     | '/event/new'
     | '/friends/add'
   id:
@@ -154,7 +176,9 @@ export interface FileRouteTypes {
     | '/profile'
     | '/signin'
     | '/welcome'
+    | '/advice/$adviceId'
     | '/clubs/$clubId'
+    | '/event/$eventId'
     | '/event/new'
     | '/friends/add'
   fileRoutesById: FileRoutesById
@@ -168,7 +192,9 @@ export interface RootRouteChildren {
   ProfileRoute: typeof ProfileRoute
   SigninRoute: typeof SigninRoute
   WelcomeRoute: typeof WelcomeRoute
+  AdviceAdviceIdRoute: typeof AdviceAdviceIdRoute
   ClubsClubIdRoute: typeof ClubsClubIdRoute
+  EventEventIdRoute: typeof EventEventIdRoute
   EventNewRoute: typeof EventNewRoute
   FriendsAddRoute: typeof FriendsAddRoute
 }
@@ -245,11 +271,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof EventNewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/event/$eventId': {
+      id: '/event/$eventId'
+      path: '/event/$eventId'
+      fullPath: '/event/$eventId'
+      preLoaderRoute: typeof EventEventIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/clubs/$clubId': {
       id: '/clubs/$clubId'
       path: '/clubs/$clubId'
       fullPath: '/clubs/$clubId'
       preLoaderRoute: typeof ClubsClubIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/advice/$adviceId': {
+      id: '/advice/$adviceId'
+      path: '/advice/$adviceId'
+      fullPath: '/advice/$adviceId'
+      preLoaderRoute: typeof AdviceAdviceIdRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -264,10 +304,22 @@ const rootRouteChildren: RootRouteChildren = {
   ProfileRoute: ProfileRoute,
   SigninRoute: SigninRoute,
   WelcomeRoute: WelcomeRoute,
+  AdviceAdviceIdRoute: AdviceAdviceIdRoute,
   ClubsClubIdRoute: ClubsClubIdRoute,
+  EventEventIdRoute: EventEventIdRoute,
   EventNewRoute: EventNewRoute,
   FriendsAddRoute: FriendsAddRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
