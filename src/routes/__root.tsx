@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useLocation,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -88,14 +89,16 @@ function RootShell({ children }: { children: React.ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+  const loc = useLocation();
+  const isOnboarding = loc.pathname === "/welcome" || loc.pathname === "/signin";
   return (
     <QueryClientProvider client={queryClient}>
       <InteractionProvider>
         <div className="phone-shell flex flex-col">
-          <main className="flex-1 overflow-y-auto pb-28 no-scrollbar">
+          <main className={`flex-1 overflow-y-auto no-scrollbar ${isOnboarding ? "" : "pb-28"}`}>
             <Outlet />
           </main>
-          <BottomTabBar />
+          {!isOnboarding && <BottomTabBar />}
         </div>
       </InteractionProvider>
     </QueryClientProvider>

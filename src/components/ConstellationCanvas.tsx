@@ -239,11 +239,6 @@ export function ConstellationCanvas() {
           onClick={() => setTransform((t) => ({ ...t, k: Math.max(0.5, t.k * 0.83) }))}
           className="size-9 rounded-full bg-background border border-border shadow-sm text-primary font-bold"
         >−</button>
-        <button
-          onClick={() => setTransform({ x: 0, y: 0, k: 1 })}
-          className="size-9 rounded-full bg-background border border-border shadow-sm text-primary text-[10px] font-bold"
-          aria-label="Re-center"
-        >⌖</button>
       </div>
     </div>
   );

@@ -2,11 +2,12 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import {
   Settings, Pencil, MessageSquare, Phone, Heart, Calendar, LogOut, Lock,
-  Sparkles, Sunrise, Compass, BookOpen, Star, ChevronRight,
+  Sunrise, Compass, BookOpen, Star, ChevronRight,
 } from "lucide-react";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { Avatar } from "@/components/Avatar";
 import { StatRing } from "@/components/StatRing";
+import { ButterflyIcon } from "@/components/ButterflyIcon";
 import { me, closestFriends, myClubs, badges, wins } from "@/data/mock";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useInteractions } from "@/components/InteractionContext";
@@ -21,8 +22,8 @@ export const Route = createFileRoute("/profile")({
   component: ProfilePage,
 });
 
-const BADGE_ICON: Record<string, typeof Star> = {
-  butterfly: Sparkles,
+const BADGE_ICON: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
+  butterfly: ButterflyIcon,
   sunrise: Sunrise,
   compass: Compass,
   heart: Heart,

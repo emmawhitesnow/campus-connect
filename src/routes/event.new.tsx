@@ -1,11 +1,32 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { useApp, type StoredEvent } from "@/store/app";
 import { friends } from "@/data/mock";
 import { Check, MapPin, AlignLeft, Users as UsersIcon, Tag, Clock } from "lucide-react";
 
+type Search = {
+  id?: string;
+  title?: string;
+  location?: string;
+  date?: string;
+  start?: string;
+  end?: string;
+  color?: StoredEvent["color"];
+  type?: (typeof TYPES)[number];
+};
+
 export const Route = createFileRoute("/event/new")({
+  validateSearch: (raw: Record<string, unknown>): Search => ({
+    id: typeof raw.id === "string" ? raw.id : undefined,
+    title: typeof raw.title === "string" ? raw.title : undefined,
+    location: typeof raw.location === "string" ? raw.location : undefined,
+    date: typeof raw.date === "string" ? raw.date : undefined,
+    start: typeof raw.start === "string" ? raw.start : undefined,
+    end: typeof raw.end === "string" ? raw.end : undefined,
+    color: raw.color as StoredEvent["color"] | undefined,
+    type: raw.type as (typeof TYPES)[number] | undefined,
+  }),
   head: () => ({ meta: [{ title: "New Event — Orbit" }] }),
   component: NewEventPage,
 });
@@ -19,47 +40,76 @@ const COLORS = [
   { id: "pink", label: "Pink", className: "bg-[oklch(0.7_0.16_350)]" },
 ] as const;
 
+function toHourFromTime(s: string) {
+  const [h, m] = s.split(":").map(Number);
+  return h + (m || 0) / 60;
+}
+function toTimeFromHour(h: number) {
+  const hh = Math.floor(h).toString().padStart(2, "0");
+  const mm = Math.round((h - Math.floor(h)) * 60).toString().padStart(2, "0");
+  return `${hh}:${mm}`;
+}
+
 function NewEventPage() {
   const navigate = useNavigate();
+  const search = Route.useSearch();
   const addEvent = useApp((s) => s.addEvent);
+  const updateEvent = useApp((s) => s.updateEvent);
+  const existing = useApp((s) => (search.id ? s.events.find((e) => e.id === search.id) : undefined));
   const today = new Date().toISOString().slice(0, 10);
-  const [title, setTitle] = useState("");
-  const [type, setType] = useState<(typeof TYPES)[number]>("Hangout");
-  const [date, setDate] = useState(today);
-  const [start, setStart] = useState("12:00");
-  const [end, setEnd] = useState("13:00");
-  const [location, setLocation] = useState("");
-  const [description, setDescription] = useState("");
-  const [invitees, setInvitees] = useState<string[]>([]);
-  const [color, setColor] = useState<StoredEvent["color"]>("indigo");
 
-  function toHour(s: string) {
-    const [h, m] = s.split(":").map(Number);
-    return h + (m || 0) / 60;
-  }
+  const [title, setTitle] = useState(existing?.title ?? search.title ?? "");
+  const [type, setType] = useState<(typeof TYPES)[number]>(existing?.type ?? search.type ?? "Hangout");
+  const [date, setDate] = useState(existing?.date ?? search.date ?? today);
+  const [start, setStart] = useState(
+    existing ? toTimeFromHour(existing.startHour) : search.start ?? "12:00",
+  );
+  const [end, setEnd] = useState(
+    existing ? toTimeFromHour(existing.endHour) : search.end ?? "13:00",
+  );
+  const [location, setLocation] = useState(existing?.location ?? search.location ?? "");
+  const [description, setDescription] = useState(existing?.description ?? "");
+  const [invitees, setInvitees] = useState<string[]>(existing?.invitees ?? []);
+  const [color, setColor] = useState<StoredEvent["color"]>(existing?.color ?? search.color ?? "indigo");
+
+  // Reload if existing arrives async
+  useEffect(() => {
+    if (existing) {
+      setTitle(existing.title);
+      setLocation(existing.location ?? "");
+      setDescription(existing.description ?? "");
+      setInvitees(existing.invitees ?? []);
+    }
+  }, [existing?.id]);
+
+  const isEdit = !!existing;
 
   function save() {
     if (!title.trim()) return;
-    const ev: StoredEvent = {
-      id: `u${Date.now()}`,
+    const payload = {
       title: title.trim(),
       type,
       date,
-      startHour: toHour(start),
-      endHour: toHour(end),
+      startHour: toHourFromTime(start),
+      endHour: toHourFromTime(end),
       location: location.trim() || undefined,
       description: description.trim() || undefined,
       invitees,
       color,
     };
-    addEvent(ev);
-    navigate({ to: "/" });
+    if (isEdit && existing) {
+      updateEvent(existing.id, payload);
+      navigate({ to: "/event/$eventId", params: { eventId: existing.id } });
+    } else {
+      addEvent({ id: `u${Date.now()}`, ...payload });
+      navigate({ to: "/" });
+    }
   }
 
   return (
     <div>
       <ScreenHeader
-        title="New event"
+        title={isEdit ? "Edit event" : "New event"}
         back="/"
         right={
           <button onClick={save} className="text-accent font-bold text-sm" disabled={!title.trim()}>
