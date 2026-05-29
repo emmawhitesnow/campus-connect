@@ -42,6 +42,8 @@ type AppState = {
   advicePosts: AdvicePost[];
 
   addEvent: (e: StoredEvent) => void;
+  updateEvent: (id: string, patch: Partial<StoredEvent>) => void;
+  removeEvent: (id: string) => void;
   toggleGoing: (id: string) => void;
   toggleJoined: (id: string) => void;
   toggleFavorite: (id: string) => void;
@@ -75,6 +77,9 @@ export const useApp = create<AppState>((set) => ({
   advicePosts: [],
 
   addEvent: (e) => set((s) => ({ events: [...s.events, e] })),
+  updateEvent: (id, patch) =>
+    set((s) => ({ events: s.events.map((e) => (e.id === id ? { ...e, ...patch } : e)) })),
+  removeEvent: (id) => set((s) => ({ events: s.events.filter((e) => e.id !== id) })),
   toggleGoing: (id) => set((s) => ({ goingEvents: { ...s.goingEvents, [id]: !s.goingEvents[id] } })),
   toggleJoined: (id) => set((s) => ({ joinedClubs: { ...s.joinedClubs, [id]: !s.joinedClubs[id] } })),
   toggleFavorite: (id) => set((s) => ({ favorites: { ...s.favorites, [id]: !s.favorites[id] } })),
