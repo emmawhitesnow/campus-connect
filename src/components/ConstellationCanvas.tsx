@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { friends } from "@/data/mock";
-import { Avatar } from "@/components/Avatar";
-import { MessageSquare, X } from "lucide-react";
+import { X, MessageSquare, Phone } from "lucide-react";
+import { closenessColor, relationScore } from "@/lib/colors";
+import { useInteractions } from "@/components/InteractionContext";
 
-type Node = { id: string; name: string; x: number; y: number; closeness: number; lastTalked: number };
+type Node = { id: string; name: string; x: number; y: number; closeness: number; lastTalked: number; score: number };
 type Edge = { a: string; b: string };
 
 function seededRand(seed: number) {
@@ -18,21 +19,20 @@ function buildGraph(): { nodes: Node[]; edges: Edge[] } {
   const rand = seededRand(7);
   const W = 600, H = 600;
   const nodes: Node[] = [
-    { id: "me", name: "Me", x: W / 2, y: H / 2, closeness: 1, lastTalked: 0 },
-    ...friends.slice(0, 22).map((f) => ({
+    { id: "me", name: "Me", x: W / 2, y: H / 2, closeness: 1, lastTalked: 0, score: 1 },
+    ...friends.slice(0, 20).map((f) => ({
       id: f.id,
       name: f.name,
       x: 60 + rand() * (W - 120),
       y: 60 + rand() * (H - 120),
       closeness: f.closeness,
       lastTalked: f.lastTalked,
+      score: relationScore(f.closeness, f.lastTalked),
     })),
   ];
   const edges: Edge[] = [];
-  // connect "me" to closest 8
   const sorted = [...nodes.slice(1)].sort((a, b) => b.closeness - a.closeness);
   sorted.slice(0, 10).forEach((n) => edges.push({ a: "me", b: n.id }));
-  // random extra edges among friends
   for (let i = 1; i < nodes.length; i++) {
     const k = Math.floor(rand() * 3);
     for (let j = 0; j < k; j++) {
@@ -49,21 +49,25 @@ export function ConstellationCanvas() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [transform, setTransform] = useState({ x: 0, y: 0, k: 1 });
   const [selected, setSelected] = useState<string | null>("f3");
+  const [alertVisible, setAlertVisible] = useState(false);
   const pointers = useRef<Map<number, { x: number; y: number }>>(new Map());
   const lastPinchDist = useRef<number | null>(null);
   const lastPan = useRef<{ x: number; y: number } | null>(null);
+  const { message, call } = useInteractions();
+
+  useEffect(() => {
+    const t = setTimeout(() => setAlertVisible(true), 400);
+    return () => clearTimeout(t);
+  }, []);
 
   function onPointerDown(e: React.PointerEvent) {
     (e.target as Element).setPointerCapture?.(e.pointerId);
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    if (pointers.current.size === 1) {
-      lastPan.current = { x: e.clientX, y: e.clientY };
-    }
+    if (pointers.current.size === 1) lastPan.current = { x: e.clientX, y: e.clientY };
   }
   function onPointerMove(e: React.PointerEvent) {
     if (!pointers.current.has(e.pointerId)) return;
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
-
     if (pointers.current.size === 2) {
       const [p1, p2] = Array.from(pointers.current.values());
       const dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
@@ -98,11 +102,13 @@ export function ConstellationCanvas() {
   }, []);
 
   const sel = selected ? nodeMap[selected] : null;
+  const selStrained = sel && sel.id !== "me" && sel.lastTalked > 20;
 
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-full overflow-hidden touch-none select-none bg-gradient-to-b from-background to-card"
+      className="relative w-full h-full overflow-hidden touch-none select-none"
+      style={{ background: "radial-gradient(ellipse at center, oklch(0.97 0.012 270) 0%, oklch(0.92 0.02 270) 100%)" }}
       onPointerDown={onPointerDown}
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
@@ -117,45 +123,63 @@ export function ConstellationCanvas() {
           transition: pointers.current.size ? "none" : "transform 0.15s ease",
         }}
       >
+        <defs>
+          {nodes.map((n) => (
+            <radialGradient key={`g-${n.id}`} id={`glow-${n.id}`} cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stopColor={closenessColor(n.score)} stopOpacity="0.55" />
+              <stop offset="100%" stopColor={closenessColor(n.score)} stopOpacity="0" />
+            </radialGradient>
+          ))}
+        </defs>
+
         {edges.map((e, i) => {
           const a = nodeMap[e.a], b = nodeMap[e.b];
           if (!a || !b) return null;
-          const strained = Math.max(a.lastTalked, b.lastTalked) > 20;
-          const close = Math.max(a.closeness, b.closeness);
+          const s = Math.max(a.score, b.score);
+          const col = closenessColor(s);
           return (
             <line
               key={i}
               x1={a.x} y1={a.y} x2={b.x} y2={b.y}
-              stroke={strained ? "#C24E7C" : "#2B3A8C"}
-              strokeOpacity={strained ? 0.6 : 0.15 + close * 0.35}
-              strokeWidth={strained ? 1.5 : 1}
-              strokeDasharray={strained ? "4 3" : undefined}
+              stroke={col}
+              strokeOpacity={0.18 + s * 0.45}
+              strokeWidth={s > 0.7 ? 1.5 : 1}
             />
           );
         })}
         {nodes.map((n) => {
           const isMe = n.id === "me";
-          const strained = n.lastTalked > 20;
-          const r = isMe ? 28 : 14 + n.closeness * 8;
+          const r = isMe ? 26 : 12 + n.closeness * 10;
+          const isSel = selected === n.id;
+          const fill = isMe ? "var(--color-primary)" : closenessColor(n.score);
           return (
             <g
               key={n.id}
               onPointerDown={(e) => { e.stopPropagation(); setSelected(n.id); }}
               style={{ cursor: "pointer" }}
             >
-              <circle cx={n.x} cy={n.y} r={r + 4} fill="white" />
+              {/* glow halo */}
+              <circle cx={n.x} cy={n.y} r={r * 2.4} fill={`url(#glow-${n.id})`} />
+              <circle cx={n.x} cy={n.y} r={r + 5} fill="white" opacity="0.85" />
               <circle
                 cx={n.x} cy={n.y} r={r}
-                fill={isMe ? "#2B3A8C" : strained ? "#E8D0DC" : "#E0E5FA"}
-                stroke={selected === n.id ? "#F5A623" : strained ? "#C24E7C" : "#2B3A8C"}
-                strokeWidth={selected === n.id ? 3 : isMe ? 2 : 1}
-                strokeOpacity={isMe ? 1 : 0.5}
+                fill={fill}
+                stroke={isSel ? "var(--color-accent)" : "white"}
+                strokeWidth={isSel ? 3 : 2}
               />
-              {isMe && (
-                <text x={n.x} y={n.y + 5} textAnchor="middle" fill="white" fontSize="14" fontWeight="700">M</text>
+              {isSel && !isMe && (
+                <circle cx={n.x} cy={n.y} r={r + 6} fill="none" stroke="var(--color-accent)" strokeOpacity="0.5" strokeWidth="2">
+                  <animate attributeName="r" from={r + 4} to={r + 14} dur="1.4s" repeatCount="indefinite" />
+                  <animate attributeName="stroke-opacity" from="0.6" to="0" dur="1.4s" repeatCount="indefinite" />
+                </circle>
               )}
-              {strained && !isMe && (
-                <circle cx={n.x + r * 0.7} cy={n.y - r * 0.7} r={5} fill="#C24E7C" />
+              {isMe && (
+                <text x={n.x} y={n.y + 5} textAnchor="middle" fill="white" fontSize="14" fontWeight="800">M</text>
+              )}
+              {!isMe && (
+                <text x={n.x} y={n.y + r + 12} textAnchor="middle" fill="var(--color-primary)" fontSize="9" fontWeight="600" opacity="0.7">
+                  {n.name}
+                </text>
               )}
             </g>
           );
@@ -163,7 +187,15 @@ export function ConstellationCanvas() {
       </svg>
 
       {sel && sel.id !== "me" && (
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 w-[88%] max-w-[320px] rounded-2xl bg-background border-2 border-primary shadow-lg p-4 z-10">
+        <div
+          className={`absolute left-1/2 -translate-x-1/2 w-[88%] max-w-[320px] rounded-2xl bg-background border-2 ${
+            selStrained ? "border-[oklch(0.65_0.22_25)]" : "border-primary"
+          } shadow-lg p-4 z-10 transition-all duration-500 ease-out`}
+          style={{
+            top: alertVisible ? 16 : -120,
+            opacity: alertVisible ? 1 : 0,
+          }}
+        >
           <button
             onClick={() => setSelected(null)}
             className="absolute top-2 right-2 text-muted-foreground"
@@ -171,13 +203,30 @@ export function ConstellationCanvas() {
           >
             <X size={16} />
           </button>
-          <p className="text-xs font-bold text-primary">Maintenance Alert</p>
-          <p className="text-sm text-primary mt-1">
-            It's been <span className="font-bold">{sel.lastTalked} days</span> since you talked to {sel.name}.
+          <p className={`text-xs font-bold ${selStrained ? "text-[oklch(0.55_0.22_25)]" : "text-primary"}`}>
+            {selStrained ? "Maintenance Alert" : "Recent connection"}
           </p>
-          <button className="mt-3 w-full rounded-full bg-primary text-primary-foreground text-xs font-semibold py-2 inline-flex items-center justify-center gap-1.5">
-            <MessageSquare size={14} /> Send a message
-          </button>
+          <p className="text-sm text-primary mt-1">
+            {selStrained ? (
+              <>It's been <span className="font-bold">{sel.lastTalked} days</span> since you talked to {sel.name}.</>
+            ) : (
+              <>You talked to <span className="font-bold">{sel.name}</span> {sel.lastTalked} day{sel.lastTalked === 1 ? "" : "s"} ago.</>
+            )}
+          </p>
+          <div className="mt-3 flex gap-2">
+            <button
+              onClick={() => message(sel.name)}
+              className="flex-1 rounded-full bg-primary text-primary-foreground text-xs font-semibold py-2 inline-flex items-center justify-center gap-1.5"
+            >
+              <MessageSquare size={14} /> Message
+            </button>
+            <button
+              onClick={() => call(sel.name)}
+              className="rounded-full bg-card text-primary border border-border text-xs font-semibold py-2 px-3 inline-flex items-center gap-1.5"
+            >
+              <Phone size={14} /> Call
+            </button>
+          </div>
         </div>
       )}
 
@@ -193,10 +242,9 @@ export function ConstellationCanvas() {
         <button
           onClick={() => setTransform({ x: 0, y: 0, k: 1 })}
           className="size-9 rounded-full bg-background border border-border shadow-sm text-primary text-[10px] font-bold"
+          aria-label="Re-center"
         >⌖</button>
       </div>
     </div>
   );
 }
-
-export { Avatar };

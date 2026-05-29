@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
-import { Home, Users, Compass, User, Plus, X, Calendar, UserPlus, Sparkles } from "lucide-react";
+import { Home, Users, Compass, User, Plus, X, Calendar, UserPlus } from "lucide-react";
 import { useState } from "react";
 
 type Tab = { to: string; label: string; icon: typeof Home; exact?: boolean };
@@ -19,17 +19,16 @@ export function BottomTabBar() {
     <>
       {fabOpen && (
         <div
-          className="absolute inset-0 z-30 bg-foreground/20 backdrop-blur-sm"
+          className="absolute inset-0 z-30 bg-foreground/20 backdrop-blur-sm animate-in fade-in duration-150"
           onClick={() => setFabOpen(false)}
         />
       )}
 
       {fabOpen && (
-        <div className="absolute bottom-28 left-1/2 z-40 -translate-x-1/2 flex flex-col gap-2 items-stretch w-56">
+        <div className="absolute bottom-28 left-1/2 z-40 -translate-x-1/2 flex flex-col gap-2 items-stretch w-56 animate-in fade-in slide-in-from-bottom-2 duration-200">
           {[
-            { icon: Calendar, label: "Add event", onClick: () => { setFabOpen(false); navigate({ to: "/" }); } },
-            { icon: UserPlus, label: "Add a friend", onClick: () => { setFabOpen(false); navigate({ to: "/network" }); } },
-            { icon: Sparkles, label: "Find a friend", onClick: () => { setFabOpen(false); navigate({ to: "/find-friend" }); } },
+            { icon: Calendar, label: "Add event", onClick: () => { setFabOpen(false); navigate({ to: "/event/new" }); } },
+            { icon: UserPlus, label: "Add a friend", onClick: () => { setFabOpen(false); navigate({ to: "/friends/add" }); } },
           ].map((a) => (
             <button
               key={a.label}

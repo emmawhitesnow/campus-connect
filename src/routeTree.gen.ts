@@ -10,14 +10,23 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ProfileRouteImport } from './routes/profile'
+import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as NetworkRouteImport } from './routes/network'
-import { Route as FindFriendRouteImport } from './routes/find-friend'
 import { Route as DiscoverRouteImport } from './routes/discover'
+import { Route as ActivityRouteImport } from './routes/activity'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as FriendsAddRouteImport } from './routes/friends.add'
+import { Route as EventNewRouteImport } from './routes/event.new'
+import { Route as ClubsClubIdRouteImport } from './routes/clubs.$clubId'
 
 const ProfileRoute = ProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NetworkRoute = NetworkRouteImport.update({
@@ -25,14 +34,14 @@ const NetworkRoute = NetworkRouteImport.update({
   path: '/network',
   getParentRoute: () => rootRouteImport,
 } as any)
-const FindFriendRoute = FindFriendRouteImport.update({
-  id: '/find-friend',
-  path: '/find-friend',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const DiscoverRoute = DiscoverRouteImport.update({
   id: '/discover',
   path: '/discover',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ActivityRoute = ActivityRouteImport.update({
+  id: '/activity',
+  path: '/activity',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -40,43 +49,102 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FriendsAddRoute = FriendsAddRouteImport.update({
+  id: '/friends/add',
+  path: '/friends/add',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EventNewRoute = EventNewRouteImport.update({
+  id: '/event/new',
+  path: '/event/new',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ClubsClubIdRoute = ClubsClubIdRouteImport.update({
+  id: '/clubs/$clubId',
+  path: '/clubs/$clubId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/activity': typeof ActivityRoute
   '/discover': typeof DiscoverRoute
-  '/find-friend': typeof FindFriendRoute
   '/network': typeof NetworkRoute
+  '/notifications': typeof NotificationsRoute
   '/profile': typeof ProfileRoute
+  '/clubs/$clubId': typeof ClubsClubIdRoute
+  '/event/new': typeof EventNewRoute
+  '/friends/add': typeof FriendsAddRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/activity': typeof ActivityRoute
   '/discover': typeof DiscoverRoute
-  '/find-friend': typeof FindFriendRoute
   '/network': typeof NetworkRoute
+  '/notifications': typeof NotificationsRoute
   '/profile': typeof ProfileRoute
+  '/clubs/$clubId': typeof ClubsClubIdRoute
+  '/event/new': typeof EventNewRoute
+  '/friends/add': typeof FriendsAddRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/activity': typeof ActivityRoute
   '/discover': typeof DiscoverRoute
-  '/find-friend': typeof FindFriendRoute
   '/network': typeof NetworkRoute
+  '/notifications': typeof NotificationsRoute
   '/profile': typeof ProfileRoute
+  '/clubs/$clubId': typeof ClubsClubIdRoute
+  '/event/new': typeof EventNewRoute
+  '/friends/add': typeof FriendsAddRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/discover' | '/find-friend' | '/network' | '/profile'
+  fullPaths:
+    | '/'
+    | '/activity'
+    | '/discover'
+    | '/network'
+    | '/notifications'
+    | '/profile'
+    | '/clubs/$clubId'
+    | '/event/new'
+    | '/friends/add'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/discover' | '/find-friend' | '/network' | '/profile'
-  id: '__root__' | '/' | '/discover' | '/find-friend' | '/network' | '/profile'
+  to:
+    | '/'
+    | '/activity'
+    | '/discover'
+    | '/network'
+    | '/notifications'
+    | '/profile'
+    | '/clubs/$clubId'
+    | '/event/new'
+    | '/friends/add'
+  id:
+    | '__root__'
+    | '/'
+    | '/activity'
+    | '/discover'
+    | '/network'
+    | '/notifications'
+    | '/profile'
+    | '/clubs/$clubId'
+    | '/event/new'
+    | '/friends/add'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ActivityRoute: typeof ActivityRoute
   DiscoverRoute: typeof DiscoverRoute
-  FindFriendRoute: typeof FindFriendRoute
   NetworkRoute: typeof NetworkRoute
+  NotificationsRoute: typeof NotificationsRoute
   ProfileRoute: typeof ProfileRoute
+  ClubsClubIdRoute: typeof ClubsClubIdRoute
+  EventNewRoute: typeof EventNewRoute
+  FriendsAddRoute: typeof FriendsAddRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -88,18 +156,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ProfileRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/network': {
       id: '/network'
       path: '/network'
       fullPath: '/network'
       preLoaderRoute: typeof NetworkRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/find-friend': {
-      id: '/find-friend'
-      path: '/find-friend'
-      fullPath: '/find-friend'
-      preLoaderRoute: typeof FindFriendRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/discover': {
@@ -109,6 +177,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DiscoverRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/activity': {
+      id: '/activity'
+      path: '/activity'
+      fullPath: '/activity'
+      preLoaderRoute: typeof ActivityRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -116,15 +191,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/friends/add': {
+      id: '/friends/add'
+      path: '/friends/add'
+      fullPath: '/friends/add'
+      preLoaderRoute: typeof FriendsAddRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/event/new': {
+      id: '/event/new'
+      path: '/event/new'
+      fullPath: '/event/new'
+      preLoaderRoute: typeof EventNewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/clubs/$clubId': {
+      id: '/clubs/$clubId'
+      path: '/clubs/$clubId'
+      fullPath: '/clubs/$clubId'
+      preLoaderRoute: typeof ClubsClubIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ActivityRoute: ActivityRoute,
   DiscoverRoute: DiscoverRoute,
-  FindFriendRoute: FindFriendRoute,
   NetworkRoute: NetworkRoute,
+  NotificationsRoute: NotificationsRoute,
   ProfileRoute: ProfileRoute,
+  ClubsClubIdRoute: ClubsClubIdRoute,
+  EventNewRoute: EventNewRoute,
+  FriendsAddRoute: FriendsAddRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
