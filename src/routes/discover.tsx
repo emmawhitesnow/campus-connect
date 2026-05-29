@@ -24,7 +24,7 @@ function DiscoverPage() {
   const [askOpen, setAskOpen] = useState(false);
 
   return (
-    <div className="relative min-h-full">
+    <div className="min-h-full">
       <ScreenHeader title="Discover" back="/" />
       <div className="px-5">
         <p className="text-center text-primary/80 mt-2">What are you looking for?</p>
