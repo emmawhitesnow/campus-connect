@@ -1,6 +1,6 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Users, Calendar, MessageCircle, Search, Star, Filter, Plus, ArrowUp, Check, Pin, X } from "lucide-react";
+import { Users, Calendar, MessageCircle, Search, Star, Filter, Plus, ArrowUp, Check, X } from "lucide-react";
 import { ScreenHeader } from "@/components/ScreenHeader";
 import { Avatar } from "@/components/Avatar";
 import { discoverClubs, discoverEvents, adviceThreads } from "@/data/mock";
@@ -21,9 +21,10 @@ type Tab = "clubs" | "events" | "advice";
 function DiscoverPage() {
   const [tab, setTab] = useState<Tab>("clubs");
   const [q, setQ] = useState("");
+  const [askOpen, setAskOpen] = useState(false);
 
   return (
-    <div>
+    <div className="relative min-h-full">
       <ScreenHeader title="Discover" back="/" />
       <div className="px-5">
         <p className="text-center text-primary/80 mt-2">What are you looking for?</p>
@@ -50,6 +51,17 @@ function DiscoverPage() {
           {tab === "advice" && <AdviceList q={q} />}
         </div>
       </div>
+
+      {tab === "advice" && (
+        <button
+          onClick={() => setAskOpen(true)}
+          className="fixed md:absolute bottom-24 right-6 z-30 rounded-full bg-accent text-accent-foreground px-4 py-3 text-sm font-bold shadow-lg inline-flex items-center gap-2"
+          style={{ right: "max(1.5rem, calc(50vw - 215px + 1.5rem))" }}
+        >
+          <Plus size={16} /> Ask
+        </button>
+      )}
+      <AskModal open={askOpen} onClose={() => setAskOpen(false)} />
     </div>
   );
 }
@@ -144,6 +156,7 @@ function ClubsList({ q }: { q: string }) {
 }
 
 function EventsList({ q }: { q: string }) {
+  const navigate = useNavigate();
   const days = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
   const fullDays = [
     ...days.map((d, i) => ({ d, date: 20 + i })),
@@ -152,17 +165,28 @@ function EventsList({ q }: { q: string }) {
   const [today, setToday] = useState(4);
   const going = useApp((s) => s.goingEvents);
   const toggleGoing = useApp((s) => s.toggleGoing);
+  const [pending, setPending] = useState<string | null>(null);
+
+  function handleToggle(id: string) {
+    setPending(id);
+    setTimeout(() => {
+      toggleGoing(id);
+      setPending(null);
+    }, 320);
+  }
 
   const filtered = useMemo(
     () => discoverEvents.filter((e) => e.title.toLowerCase().includes(q.toLowerCase())),
     [q],
   );
-  const pinned = filtered.filter((e) => going[e.id]);
-  const others = filtered.filter((e) => !going[e.id]);
+  // Pinning state respects pending toggle visually
+  const goingNow = (id: string) => (pending === id ? !going[id] : going[id]);
+  const pinned = filtered.filter((e) => goingNow(e.id));
+  const others = filtered.filter((e) => !goingNow(e.id));
 
   return (
     <>
-      <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-5 px-5 snap-x snap-mandatory">
+      <div className="flex gap-2 overflow-x-auto no-scrollbar -mx-5 pl-5 pr-12 snap-x snap-mandatory">
         {fullDays.map((d, i) => (
           <button
             key={i}
@@ -177,8 +201,26 @@ function EventsList({ q }: { q: string }) {
         ))}
       </div>
       <div className="mt-4 space-y-3">
-        {pinned.map((e) => <EventCard key={e.id} e={e} going onToggle={() => toggleGoing(e.id)} pinned />)}
-        {others.map((e) => <EventCard key={e.id} e={e} going={false} onToggle={() => toggleGoing(e.id)} />)}
+        {pinned.map((e) => (
+          <EventCard
+            key={e.id}
+            e={e}
+            going
+            moving={pending === e.id}
+            onToggle={() => handleToggle(e.id)}
+            onOpen={() => navigate({ to: "/event/$eventId", params: { eventId: e.id } })}
+          />
+        ))}
+        {others.map((e) => (
+          <EventCard
+            key={e.id}
+            e={e}
+            going={false}
+            moving={pending === e.id}
+            onToggle={() => handleToggle(e.id)}
+            onOpen={() => navigate({ to: "/event/$eventId", params: { eventId: e.id } })}
+          />
+        ))}
         {filtered.length === 0 && <p className="text-center text-sm text-muted-foreground py-6">No events match.</p>}
       </div>
     </>
@@ -186,28 +228,29 @@ function EventsList({ q }: { q: string }) {
 }
 
 function EventCard({
-  e, going, onToggle, pinned,
+  e, going, moving, onToggle, onOpen,
 }: {
   e: typeof discoverEvents[number];
   going: boolean;
+  moving: boolean;
   onToggle: () => void;
-  pinned?: boolean;
+  onOpen: () => void;
 }) {
   return (
-    <div className="rounded-2xl bg-card p-4 relative">
-      {pinned && (
-        <span className="absolute top-3 right-3 text-[10px] text-muted-foreground inline-flex items-center gap-1">
-          <Pin size={10} /> Pinned
-        </span>
-      )}
+    <div
+      onClick={onOpen}
+      className={`rounded-2xl bg-card p-4 relative cursor-pointer transition-all duration-300 ${
+        moving ? "translate-y-2 opacity-50 scale-[0.98]" : "translate-y-0 opacity-100"
+      }`}
+    >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="text-[11px] font-semibold text-accent">{e.day} | {e.time}</p>
-          <p className="text-sm font-bold text-primary mt-0.5">{e.title}</p>
+          <p className="text-sm font-bold text-primary leading-snug">{e.title}</p>
+          <p className="text-[11px] font-semibold text-accent mt-0.5">{e.day} | {e.time}</p>
           <p className="text-[11px] text-muted-foreground">{e.location}</p>
         </div>
         <button
-          onClick={onToggle}
+          onClick={(ev) => { ev.stopPropagation(); onToggle(); }}
           className={`text-xs font-semibold rounded-full px-3 py-1.5 inline-flex items-center gap-1 ${
             going
               ? "bg-[oklch(0.92_0.06_150)] text-[oklch(0.4_0.14_150)]"
@@ -230,13 +273,13 @@ function EventCard({
 const ADVICE_TAGS = ["All", "Academics", "Housing", "Greek life", "Dining", "Wellness"];
 
 function AdviceList({ q }: { q: string }) {
+  const navigate = useNavigate();
   const posts = useApp((s) => s.advicePosts);
   const all = useMemo(
     () => [...posts.map((p) => ({ ...p, isNew: true } as any)), ...adviceThreads],
     [posts],
   );
   const [tag, setTag] = useState("All");
-  const [open, setOpen] = useState(false);
 
   const list = useMemo(() => {
     return all.filter((t) =>
@@ -260,9 +303,13 @@ function AdviceList({ q }: { q: string }) {
           </button>
         ))}
       </div>
-      <div className="mt-4 space-y-3">
+      <div className="mt-4 space-y-3 pb-20">
         {list.map((t) => (
-          <div key={t.id} className="rounded-2xl bg-card p-4">
+          <button
+            key={t.id}
+            onClick={() => navigate({ to: "/advice/$adviceId", params: { adviceId: t.id } })}
+            className="w-full text-left rounded-2xl bg-card p-4"
+          >
             <div className="flex items-center gap-2">
               <span className="text-[10px] rounded-full bg-primary/10 text-primary px-2 py-0.5 font-semibold">{t.tag}</span>
               <span className="text-[10px] text-muted-foreground">answered by {t.answeredBy}</span>
@@ -272,16 +319,9 @@ function AdviceList({ q }: { q: string }) {
               <span className="inline-flex items-center gap-1"><ArrowUp size={12} /> {t.upvotes}</span>
               <span>{t.answers} answers</span>
             </div>
-          </div>
+          </button>
         ))}
       </div>
-      <button
-        onClick={() => setOpen(true)}
-        className="absolute bottom-28 right-6 z-10 rounded-full bg-accent text-accent-foreground px-4 py-3 text-sm font-bold shadow-lg inline-flex items-center gap-2"
-      >
-        <Plus size={16} /> Ask
-      </button>
-      <AskModal open={open} onClose={() => setOpen(false)} />
     </>
   );
 }
