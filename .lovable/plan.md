@@ -1,93 +1,130 @@
 
-## Name suggestion
+# Orbit — Functionality + Polish Pass
 
-**Orbit** — relationships circle around you like a constellation; ties directly to the Network screen metaphor. Alternates if you'd rather: **Tether**, **Commons**, **Circle**, **Halo**. I'll use **Orbit** unless you say otherwise.
+A big batch of changes. Everything is still frontend-only with mock data (no backend yet). State that needs to persist across screens (events you add, friends added, notifications dismissed, going/joined toggles) will live in a lightweight in-memory store (Zustand) so changes show up everywhere.
 
-## Scope
+---
 
-Mobile-first web app, max-width ~430px centered, with a subtle iPhone-style frame (rounded bezel, soft shadow) visible on desktop ≥768px. All data is mocked in-file — no backend, no auth, no Lovable Cloud. Pure presentation + interactive UI.
+## 0. Global
 
-## Design tokens (added to `src/styles.css`)
+- Add a small **"Orbit"** wordmark to the home header (top-left, next to/under the avatar, in the indigo display weight).
+- Replace `·` separators with `|` everywhere (home event meta, discover stats, profile meta, etc.).
+- All avatars use the same colorful deterministic `<Avatar seed=… />` — apply it to club/event "pfps" on Discover too (currently flat gray).
+- Add a tiny global store `src/store/app.ts` (Zustand) for: events, friends, notifications, going/joined sets, favorites.
+- Add reusable `Modal`, `ActionSheet` (iOS-style bottom prompt for Call/Message), and `Toast` primitives.
 
-- `--primary` deep indigo `#2B3A8C`
-- `--accent` warm gold `#F5A623`
-- `--card` light gray `#F2F3F7`
-- `--background` white
-- `--muted-foreground` cool gray for meta text
-- Radius `--radius: 1.25rem` (generous), pills for search/buttons
-- Font: Plus Jakarta Sans (clean friendly sans), loaded via Google Fonts in `__root.tsx`
+## 1. Home (`/`)
 
-## Routes (TanStack Start)
+- **Sticky header**: avatar + "Orbit" wordmark + bell + hamburger stay pinned while scrolling (sticky inside the phone shell).
+- **Bell** → routes to new `/notifications` screen; red dot disappears once all notifications are read/dismissed.
+- **Hamburger** → opens a dropdown (Radix) with: Home preferences, Theme (light/dark toggle — visual only), Help, Sign out (visual only). If we don't want it, we drop it; default plan is to keep it with those four.
+- **"See all"** next to Friend Activity → routes to `/activity` (full scrollable list, back button to `/`).
+- **Send message** button on activity cards → opens an iMessage-style mini modal (To: name, text input, Send/Cancel).
+- **Call** button → bottom action sheet "Call {name} at (xxx) xxx-xxxx?" with Call / Cancel.
+- **Add event** CTA on family activity → opens the new Add Event flow (see §5).
+- Remove the ✨ sparkle icon next to "Recommended for you".
+- Recommendation "Plan it" / "View" → "Plan it" opens Add Event prefilled; "View" opens a small details modal.
+- **Today's Event Lineup**:
+  - Make it vertically scrollable; initial window shows ~10 AM–2 PM, user scrolls to earlier/later hours (6 AM – 11 PM range).
+  - Event blobs become **rounded-rectangles** (radius ~10px, not pill).
+  - Event titles centered inside the blob with proper padding + truncation so "Breakfast with Manya" / "Lacrosse tournament" sit cleanly inside.
+  - New events created via Add Event appear here automatically.
 
+## 2. FAB quick-actions
+
+- **Add event** → `/event/new` (full screen, GCal-style):
+  - Fields: Title, Type (chips: Hangout, Club event, Class, Workout, Other), Start/End time, Date, Location, Invite people (multi-select from friends), Description, Color.
+  - Save → pushes into store → renders on Home's Today lineup (if same day) and Discover Events.
+- **Add a friend** → `/friends/add` (replaces the redundant Network jump):
+  - Search bar over mock contacts + "people on Orbit", Instagram-style rows with Add / Requested toggle, mutual count.
+- **Remove "Find a friend"** from the FAB menu (the route stays reachable from Network if needed; we can also delete it — defaulting to keep route, remove from FAB).
+
+## 3. Notifications (`/notifications`, new)
+
+- Scrollable list of mock notifications grouped Today / This Week / Earlier.
+- Each item: avatar, text, time, swipe-or-tap-to-dismiss, tap to "address" (marks read, can deep-link e.g. to a friend or event).
+- "Mark all read" button. Unread count drives the bell dot on Home.
+
+## 4. Network (`/network`)
+
+- **Color spectrum**: edges + node fills interpolate across a 5-stop gradient from red (strained / >30d) → orange → yellow → light blue → deep indigo (very close / recent). Same scale used for the node ring.
+- Re-center button (third button) actually resets pan to center *and* scale to 1 (not scrolls to top).
+- "Maintenance Alert" card animates in from the top (translate + fade) ~400ms after the page mounts.
+- Node visuals: soft outer glow (radial gradient halo) sized by closeness, subtle pulse on the selected node, thin connecting lines with gradient stroke. Goal: more "wow", still readable.
+- **Send message / Call** on the alert + bottom-sheet rows → same modals as Home.
+- **Filter** button → dropdown: Favorites only, Newest, Oldest, Most talked to, Least talked to (re-sorts the bottom list).
+- **Search** (top-right + sheet input) → focuses an input; live-filters ~20 mock friends by name.
+- **Heart** button → toggles favorite with a quick scale+fill animation (gray → coral, pop).
+- Top-right search icon also opens the same search input (focus the sheet's search bar).
+
+## 5. Discover (`/discover`)
+
+### Clubs
+- Each club row is clickable → `/clubs/$clubId` profile page: hero image, description, tags, member count, rating + reviews list, photo strip, Join/Leave button.
+- Filter chips (Outdoors / Performance / Music / etc.) are toggle-able and filter the visible list.
+- Search bar live-filters clubs.
+- Color avatars for club tiles.
+
+### Events
+- Week strip is horizontally swipeable (snap to day).
+- "Going" button states:
+  - Going → **green pill, filled, checkmark** ("Going ✓").
+  - Not going → indigo outline pill labeled **"Plan it"** (toggleable).
+- Events the user is "Going" to are **pinned to the top** with a subtle "Pinned" tag; others below.
+- Keep "2 friends going" / "3 friends free" as a **non-clickable tag** — drop the "→ schedule" affordance.
+- Search bar live-filters events.
+
+### Advice
+- Search bar live-filters posts.
+- "Ask" FAB → opens "New post" modal: Title, Tags (chips, multi), Body, Post button. New post prepends to the feed (store).
+
+## 6. Profile (`/profile`)
+
+- **StatRing animation**: ring stroke animates from 0 → target % over ~600ms on mount (CSS transition on `strokeDashoffset` after a `requestAnimationFrame`).
+- **Badge icons**: distinct lucide icons per badge (e.g. Social Butterfly → butterfly-ish glyph using `Sparkles`/custom SVG, Early Bird → `Sunrise`, Bookworm → `BookOpen`, Streak → `Flame`, Explorer → `Compass`, etc.). Locked badges stay gray.
+- **Closest friends**: each row gets a small "97 hrs together" meta line.
+- Fix spacing: `Connected · 247` (with proper gap) — currently renders as "Connected247".
+- **Settings** icon → slide-in-from-right panel (Sheet) with grouped rows: Notifications, Privacy, Account, About, Help, Log out. Visual only.
+
+## 7. Cross-screen interactions (recap)
+
+- Call/Message popups, Add Event modal, Add Friend search, and Notifications list are shared and live in the store, so toggling state on one screen reflects on the others (e.g., adding an event shows on Home + Discover Events; joining a club updates the Clubs list).
+
+---
+
+## Technical notes
+
+```text
+src/
+  store/app.ts                 # zustand: events, friends, notifications, going, joined, favorites, settings
+  components/
+    Modal.tsx                  # base modal
+    ActionSheet.tsx            # iOS-style bottom prompt (call confirm)
+    MessageModal.tsx           # iMessage mini-composer
+    HeaderBar.tsx              # sticky home header (avatar | Orbit | bell | menu)
+    NotificationItem.tsx
+    EventBlock.tsx             # rounded-rect calendar block, centered text
+    ScrollableDayTimeline.tsx  # 6AM-11PM, initial scroll to 10AM
+    ClubCard.tsx / EventCard.tsx / AdviceCard.tsx
+    FilterChip.tsx
+    SlidingPanel.tsx           # right-side settings drawer
+  routes/
+    notifications.tsx          # new
+    activity.tsx               # "See all" friend activity
+    event.new.tsx              # GCal-style create
+    friends.add.tsx            # search + add
+    clubs.$clubId.tsx          # club profile
+  data/mock.ts                 # add: notifications[], 20 friends w/ phone#s, club detail content, event types/colors
 ```
-src/routes/
-  __root.tsx          → phone-frame shell + bottom tab bar + FAB + <Outlet/>
-  index.tsx           → Home
-  network.tsx         → Constellation
-  discover.tsx        → Discover hub (Clubs / Events / Advice tabs)
-  find-friend.tsx     → Swipe-to-friend (reached via FAB or Network)
-  profile.tsx         → Profile + stats
-```
 
-Bottom tabs: Home, Network, Discover, Profile. Center floating **+** opens a small action sheet → "Add event" / "Add friend" / "Find a friend".
+- Network coloring helper `closenessColor(score: 0..1)` returns interpolated oklch on the red→orange→yellow→sky→indigo ramp; used for ring + edge.
+- Hamburger uses existing `dropdown-menu`; Settings panel uses `sheet`; Modals use `dialog`.
+- Persistence: in-memory only this pass (no localStorage / backend). State resets on full reload — acceptable for a demo.
 
-## Screens
+## Out of scope (this pass)
 
-**1. Home (`/`)** — matches mockup
-- Header: avatar (left), bell + menu (right)
-- "Hello, Emma." + "What can we help you find?" + gold pill search
-- **Friend Activity** card list with TLC prompts: "You haven't talked to Emile in 6 days" → Send a message; "Mom hasn't heard from you in 4 days" → Call; "Julia is going to HouseFest today" → Add to calendar
-- **Today's Event Lineup** — timeline column 10AM–6PM with colored event blocks (gold/indigo/blue)
-- **Recommended for you** (new): "3 friends free at 1pm → Schedule lunch" card, "Event matches your interests" card
+- Real messaging / telephony, real calendar sync, real auth, backend persistence, real friend graph updates from the server.
+- Dark mode beyond the toggle stub.
+- True multi-touch animations beyond what we already have on Network.
 
-**2. Network (`/network`)** — constellation
-- SVG canvas: ~25 nodes (avatars) connected by lines; line opacity = closeness, dashed/red-tinted = strained
-- Pinch/drag zoom via simple pan+wheel (touch via pointer events on transform group). Pinch is genuinely tricky in SSR-safe React — I'll implement two-finger pinch with the Pointer Events API; if it feels janky we can simplify to +/- buttons.
-- "Me" node centered with avatar; tap any node → small popover ("28 days since you talked to Amy — Send a message")
-- Bottom drag sheet (Life360-style) with handle: filter + search, scrollable friend list with message/call/favorite quick actions. Three snap points: peek / half / full.
-
-**3. Discover (`/discover`)** — fleshed out from your sketch
-- Title + "What are you looking for?" + 3 big cards: **Clubs**, **Events**, **Advice**
-- Gold pill search below
-- Sub-tab content (segmented control switches view, no separate routes):
-  - **Clubs**: filter chips (Interest, Size, Time commitment), club cards with rating stars, "X of your friends are members", review count, Join button
-  - **Events**: week calendar strip + event list; each event shows "3 friends free", "2 friends going", quick "Schedule with friends" CTA
-  - **Advice**: forum-style thread list; tags (Academics, Housing, Greek life, Dining); upvotes, "Answered by '26"; floating "Ask a question" button
-
-**4. Profile (`/profile`)** — matches mockup
-- Header back + "Profile" + settings gear
-- Avatar + name + pronouns + class year + "67 connections · 8 clubs"
-- "This past week" — 3 circular stat rings (92% show-up rate, 42 people met, 7 clubs attended)
-- **Badges row** (new, gentle gamification): "Social Butterfly", "Early Bird", "Club Hopper" — earned/locked states
-- **Your closest friends** card list (message/call/favorite icons)
-- **Your clubs** card list (calendar/leave/favorite icons)
-- **Wins this week** (subtle, non-leaderboard): "Most time with: Emile", "Favorite spot: Novack", "Busiest day: Thursday"
-
-**5. Find a Friend (`/find-friend`)** — matches mockup
-- Header back + title + menu
-- **People you might like** — large swipe card (photo, name, age/pronouns/major, bio, "You both like drawing" gold chip), X / heart action buttons, dots indicator. Swipe via pointer drag with rotation + opacity.
-- Tap card → expanded profile sheet with "Schedule coffee chat" CTA
-- **People in your circle** — second swipeable stack (mutuals-based, "You have 17 mutuals" chip)
-- **New section idea**: "Icebreakers" — 3 conversation-starter prompt cards if you match
-
-## Shared components
-
-- `PhoneFrame` — desktop bezel wrapper in `__root.tsx`
-- `BottomTabBar` + `Fab` with action-sheet menu
-- `StatRing` (SVG circle progress)
-- `ConstellationCanvas` (SVG + pan/zoom hook)
-- `DragSheet` (3-snap bottom sheet)
-- `SwipeCard` (pointer-drag with spring-back)
-- All use semantic tokens — no hardcoded hex in components
-
-## Mock data
-
-`src/data/mock.ts` — friends, events, clubs, advice threads, find-a-friend candidates. Realistic Dartmouth-flavored names/clubs since mockups reference it.
-
-## Out of scope (call out if you want them added)
-
-- Real Google Calendar sync, location tracking, messaging, auth
-- Backend persistence — swipes/favorites are session-only
-- True multi-touch pinch tested on every device (best-effort)
-
-Ready to build on approval.
+If you want anything trimmed, swapped, or split into a second pass, say the word — otherwise I'll build the whole list.
